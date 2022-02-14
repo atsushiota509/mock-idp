@@ -42,25 +42,27 @@ def sign_assertions(response_str):
 
 
 def create_auth_response(config, session):
-    rendered_response = render_response(session, session.user)
+    service_provider = get_service_provider(config, session.sp_entity_id)
+
+    rendered_response = render_response(session, session.user, service_provider)
 
     signed_response = sign_assertions(rendered_response)
 
     encoded_response = base64.b64encode(signed_response).decode('utf-8')
 
-    service_provider = get_service_provider(config, session.sp_entity_id)
     url = service_provider['response_url']
 
     return url, encoded_response
 
 
-def render_response(session, user):
+def render_response(session, user, config):
     template = env.get_template('saml_response.xml')
     issue_instant = get_issue_instant(session)
     params = dict(
         issue_instant=issue_instant,
         session=session,
-        user=user
+        user=user,
+        config=config
     )
     response = template.render(params)
 
